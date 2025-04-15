@@ -170,10 +170,10 @@ defmodule MyApp.Artist do
     triggers do
       trigger :my_vectorize_trigger do
         action :ash_ai_update_embeddings
-        where expr(is_nil(full_text_vector))
         worker_read_action :read
         worker_module_name __MODULE__.AshOban.Worker.UpdateEmbeddings
         scheduler_module_name __MODULE__.AshOban.Scheduler.UpdateEmbeddings
+        scheduler_cron nil
         list_tenants MyApp.ListTenants
       end
     end

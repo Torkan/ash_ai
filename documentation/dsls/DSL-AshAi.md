@@ -69,8 +69,9 @@ Target: `AshAi.Tool`
 |------|------|---------|------|
 | [`embedding_model`](#vectorize-embedding_model){: #vectorize-embedding_model .spark-required} | `module` |  |  |
 | [`attributes`](#vectorize-attributes){: #vectorize-attributes } | `keyword` | `[]` | A keyword list of attributes to vectorize, and the name of the attribute to store the vector in |
-| [`strategy`](#vectorize-strategy){: #vectorize-strategy } | `:after_action \| :manual` | `:after_action` | How to compute the vector. Only `after_action` is supported, but eventually `ash_oban` will be supported as well |
+| [`strategy`](#vectorize-strategy){: #vectorize-strategy } | `:after_action \| :manual \| :ash_oban \| :ash_oban_manual` | `:after_action` | How to compute the vector. Currently supported strategies are `:after_action`, `:manual`, and `:ash_oban`. |
 | [`define_update_action_for_manual_strategy?`](#vectorize-define_update_action_for_manual_strategy?){: #vectorize-define_update_action_for_manual_strategy? } | `boolean` | `true` | If true, an `ash_ai_update_embeddings` update action will be defined, which will automatically update the embeddings when run. |
+| [`ash_oban_trigger_name`](#vectorize-ash_oban_trigger_name){: #vectorize-ash_oban_trigger_name } | `atom` | `:ash_ai_update_embeddings` | The name of the AshOban-trigger that will be run in order to update the record's embeddings. Defaults to `:ash_ai_update_embeddings`. |
 
 
 ### vectorize.full_text
