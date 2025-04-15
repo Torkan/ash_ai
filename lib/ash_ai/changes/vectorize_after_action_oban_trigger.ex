@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(Oban) do
+if Code.ensure_loaded?(AshOban) do
   defmodule AshAi.Changes.VectorizeAfterActionObanTrigger do
     @moduledoc "Run an ash_oban trigger when embeddings need to be regenerated."
     use Ash.Resource.Change
