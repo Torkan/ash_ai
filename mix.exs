@@ -152,6 +152,7 @@ defmodule AshAi.MixProject do
       {:ash_phoenix, "~> 2.0", optional: true},
       {:igniter, "~> 0.5", optional: true},
       # dev/test deps
+      {:phx_new, "~> 1.7", optional: true},
       {:ex_doc, "~> 0.37-rc", only: [:dev, :test], runtime: false},
       {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},

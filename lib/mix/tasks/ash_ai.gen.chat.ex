@@ -345,7 +345,9 @@ if Code.ensure_loaded?(Igniter) do
         upsert? true
         accept [:id, :response_to_id, :conversation_id]
         argument :complete, :boolean, default: false
-        argument :text, :string, allow_nil?: false, constraints: [trim?: false]
+        argument :text, :string, allow_nil?: false, constraints: [trim?: false, allow_empty?: true]
+
+        validate argument_does_not_equal?(:text, "")
 
         # if updating
         #   if complete, set the text to the provided text
