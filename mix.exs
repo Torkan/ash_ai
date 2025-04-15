@@ -24,7 +24,18 @@ defmodule AshAi.MixProject do
       dialyzer: [plt_add_apps: [:ash, :mix]],
       description: @description,
       source_url: @source_url,
-      homepage_url: @source_url
+      homepage_url: @source_url,
+      preferred_cli_env: [
+        "test.create": :test,
+        "test.migrate": :test,
+        "test.rollback": :test,
+        "test.migrate_tenants": :test,
+        "test.check_migrations": :test,
+        "test.drop": :test,
+        "test.generate_migrations": :test,
+        "test.reset": :test,
+        "test.full_reset": :test
+      ]
     ]
   end
 
@@ -163,7 +174,16 @@ defmodule AshAi.MixProject do
         "docs",
         "spark.replace_doc_links"
       ],
-      "spark.cheat_sheets": "spark.cheat_sheets --extensions AshAi"
+      "spark.cheat_sheets": "spark.cheat_sheets --extensions AshAi",
+      "test.generate_migrations": "ash_postgres.generate_migrations",
+      "test.check_migrations": "ash_postgres.generate_migrations --check",
+      "test.migrate_tenants": "ash_postgres.migrate --tenants",
+      "test.migrate": "ash_postgres.migrate",
+      "test.rollback": "ash_postgres.rollback",
+      "test.create": "ash_postgres.create",
+      "test.full_reset": ["test.generate_migrations", "test.reset"],
+      "test.reset": ["test.drop", "test.create", "test.migrate", "ash_postgres.migrate --tenants"],
+      "test.drop": "ash_postgres.drop"
     ]
   end
 end

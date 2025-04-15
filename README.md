@@ -87,9 +87,8 @@ end
 
 ## Vectorization
 
-This extension creates a vector search action and also rebuilds and stores a vector on all changes.
-This will make your app much slower in its current form. We wille ventually make it work where it triggers an oban
-job to do this work after-the-fact.
+This extension creates a vector search action, and provides a few different strategies for how to
+update the embeddings when needed.
 
 ```elixir
 # in a resource
@@ -102,9 +101,14 @@ vectorize do
       Biography: #{record.biography}
       """
     end)
+
+    # When used_attributes are defined, embeddings will only be rebuilt when
+    # the listed attributes are changed in an update action.
+    used_attributes [:name, :biography]
   end
 
-  attributes(name: :vectorized_name)
+  strategy :after_action
+  attributes(name: :vectorized_name, biography: :vectorized_biography)
 
   # See the section below on defining an embedding model
   embedding_model MyApp.OpenAiEmbeddingModel
@@ -116,6 +120,82 @@ If you are using policies, add a bypass to allow us to update the vector embeddi
 ```elixir
 bypass AshAi.Checks.ActorIsAshAi do
   authorize_if always()
+end
+```
+
+## Vectorization strategies
+
+Currently there are three strategies to choose from:
+
+- `:after_action` (default) - The embeddings will be updated synchronously on after every create & update action.
+- `:ash_oban` - Embeddings will be updated asynchronously through an `ash_oban`-trigger when a record is created and updated.
+- `:manual` - The embeddings will not be automatically updated in any way.
+
+### `:after_action`
+
+Will add a global change on the resource, that will run a generated action named `:ash_ai_update_embeddings`
+on every update that requires the embeddings to be rebuilt. The `:ash_ai_update_embeddings`-action will be run in the `after_transaction`-phase of any create action and update action that requires the embeddings to be rebuilt.
+
+This will make your app incredibly slow, and is not recommended for any real production usage.
+
+### `:ash_oban`
+
+Requires the `ash_oban`-dependency to be installed, and that the resource in question uses it as an extension, like this:
+
+```elixir
+defmodule MyApp.Artist do
+  use Ash.Resource, extensions: [AshAi, AshOban]
+end
+```
+
+Just like the `:after_action`-strategy, this strategy creates an `:ash_ai_update_embeddings` update-action, and adds a global change that will run an `ash_oban`-trigger (also in the `after_transaction`-phase) whenever embeddings need to be rebuilt.
+
+You will to define this trigger yourself, and then reference it in the `vectorize`-section like this:
+
+```elixir
+defmodule MyApp.Artist do
+  use Ash.Resource, extensions: [AshAi, AshOban]
+
+  vectorize do
+    full_text do
+      ...
+    end
+
+    strategy :ash_oban
+    ash_oban_trigger_name :my_vectorize_trigger (default name is :ash_ai_update_embeddings)
+    ...
+  end
+
+  oban do
+    triggers do
+      trigger :my_vectorize_trigger do
+        action :ash_ai_update_embeddings
+        where expr(is_nil(full_text_vector))
+        worker_read_action :read
+        worker_module_name __MODULE__.AshOban.Worker.UpdateEmbeddings
+        scheduler_module_name __MODULE__.AshOban.Scheduler.UpdateEmbeddings
+        list_tenants MyApp.ListTenants
+      end
+    end
+  end
+end
+```
+
+### `:manual`
+
+Will not automatically update the embeddings in any way, but will by default generated an update action
+named `:ash_ai_update_embeddings` that can be run on demand. If needed, you can also disable the
+generation of this action like this:
+
+```elixir
+vectorize do
+  full_text do
+    ...
+  end
+
+  strategy :manual
+  define_update_action_for_manual_strategy? false
+  ...
 end
 ```
 

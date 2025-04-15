@@ -125,6 +125,41 @@ defmodule AshAi.Transformers.Vectorize do
             else
               {:ok, dsl_state}
             end
+
+          :ash_oban ->
+            if Code.ensure_loaded?(AshOban) do
+              trigger_name = AshAi.Info.vectorize_ash_oban_trigger_name!(dsl_state)
+
+              triggers =
+                Spark.Dsl.Transformer.get_entities(dsl_state, [:oban, :triggers])
+
+              trigger_defined? = Enum.any?(triggers, &(&1.name == trigger_name))
+
+              if trigger_defined? do
+                dsl_state
+                |> add_change(
+                  {AshAi.Changes.VectorizeAfterActionObanTrigger, [trigger_name: trigger_name]}
+                )
+                |> add_new_action(:update, :ash_ai_update_embeddings,
+                  accept: [],
+                  changes: [
+                    %Ash.Resource.Change{
+                      change: {AshAi.Changes.Vectorize, [vectors: vectors]},
+                      on: nil,
+                      only_when_valid?: true,
+                      description: nil,
+                      always_atomic?: false,
+                      where: []
+                    }
+                  ],
+                  require_atomic?: false
+                )
+              else
+                raise "ash_oban-trigger :#{trigger_name} is not defined."
+              end
+            else
+              raise "AshOban must be loaded in order to use the :ash_oban strategy, see README.md in ash_ai for instructions."
+            end
         end
     end
   end
@@ -155,6 +190,13 @@ defmodule AshAi.Transformers.Vectorize do
             )
 
           :manual ->
+            dsl_state
+            |> add_new_attribute(name, :vector,
+              constraints: [dimensions: embedding_model.dimensions(opts)],
+              select_by_default?: false
+            )
+
+          :ash_oban ->
             dsl_state
             |> add_new_attribute(name, :vector,
               constraints: [dimensions: embedding_model.dimensions(opts)],

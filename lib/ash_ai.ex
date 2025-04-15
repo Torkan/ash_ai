@@ -44,16 +44,25 @@ defmodule AshAi do
         default: []
       ],
       strategy: [
-        type: {:one_of, [:after_action, :manual]},
+        type: {:one_of, [:after_action, :manual, :ash_oban, :ash_oban_manual]},
         default: :after_action,
         doc:
-          "How to compute the vector. Only `after_action` is supported, but eventually `ash_oban` will be supported as well"
+          "How to compute the vector. Currently supported strategies are `after_action`, `manual`, `ash_oban`, and `ash_oban_manual`."
       ],
       define_update_action_for_manual_strategy?: [
         type: :boolean,
         default: true,
         doc:
           "If true, an `ash_ai_update_embeddings` update action will be defined, which will automatically update the embeddings when run."
+      ],
+      ash_oban_trigger_name: [
+        type: :atom,
+        default: :ash_ai_update_embeddings,
+        doc: """
+        The name of the AshOban-trigger that will be run in order to update the record's embeddings.
+        You have to define this yourself, see the README for instructions.
+        Defaults to `:ash_ai_update_embeddings`.
+        """
       ],
       embedding_model: [
         type: {:spark_behaviour, AshAi.EmbeddingModel},
