@@ -1,4 +1,5 @@
 defmodule AshAi.Test.Music.ArtistAfterAction do
+  @moduledoc false
   use Ash.Resource,
     domain: AshAi.Test.Music,
     extensions: [AshAi],
@@ -40,6 +41,7 @@ defmodule AshAi.Test.Music.ArtistAfterAction do
 end
 
 defmodule AshAi.Test.Music.ArtistManual do
+  @moduledoc false
   use Ash.Resource,
     domain: AshAi.Test.Music,
     extensions: [AshAi],
@@ -81,6 +83,7 @@ defmodule AshAi.Test.Music.ArtistManual do
 end
 
 defmodule AshAi.Test.Music.ArtistOban do
+  @moduledoc false
   use Ash.Resource,
     domain: AshAi.Test.Music,
     extensions: [AshAi, AshOban],

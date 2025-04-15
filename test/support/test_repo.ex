@@ -5,6 +5,9 @@ Postgrex.Types.define(
 )
 
 defmodule AshAi.TestRepo do
+  @moduledoc """
+  Repo for testing with AshPostgres
+  """
   use AshPostgres.Repo, otp_app: :ash_ai
 
   def installed_extensions do

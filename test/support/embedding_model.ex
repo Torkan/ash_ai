@@ -1,4 +1,5 @@
 defmodule AshAi.Test.EmbeddingModel do
+  @moduledoc false
   use AshAi.EmbeddingModel
   require Logger
 

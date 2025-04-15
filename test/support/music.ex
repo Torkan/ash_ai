@@ -1,4 +1,5 @@
 defmodule AshAi.Test.Music do
+  @moduledoc false
   use Ash.Domain, otp_app: :ash_ai
 
   resources do
