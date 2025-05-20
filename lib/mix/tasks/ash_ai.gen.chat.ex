@@ -842,87 +842,140 @@ if Code.ensure_loaded?(Igniter) do
       #{on_mount}
         def render(assigns) do
           ~H\"""
-          <div class="h-screen flex overflow-hidden">
-            <div class="w-1/4 border-r overflow-y-auto">
-              <div class="p-4">
-                <.header class="text-lg mb-4">
-                  Conversations
-                </.header>
-                <div class="mb-4">
-                  <.link
-                    navigate={~p"/chat"}
-                    class="w-full py-2 px-3 flex items-center justify-center rounded-md transition"
-                  >
-                    <span>New Chat</span>
-                  </.link>
-                </div>
-                <ul class="space-y-2 flex flex-col-reverse" phx-update="stream" id="conversations-list">
-                  <%= for {id, conversation} <- @streams.conversations do %>
-                    <li id={id}>
-                      <.link
-                        href={~p"/chat/\#{conversation.id}"}
-                        phx-click="select_conversation"
-                        phx-value-id={conversation.id}
-                        class={"block py-2 px-3 rounded-md truncate transition \#{if @conversation && @conversation.id == conversation.id, do: "font-medium border-l-4 border-blue-500 pl-2", else: ""}"}
+          <div class="drawer md:drawer-open bg-base-200 min-h-dvh max-h-dvh">
+            <input id="ash-ai-drawer" type="checkbox" class="drawer-toggle" />
+            <div class="drawer-content flex flex-col">
+              <div class="navbar bg-base-300 w-full">
+                <div class="flex-none md:hidden">
+                  <label for="ash-ai-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      class="inline-block h-6 w-6 stroke-current"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 6h16M4 12h16M4 18h16"
                       >
-                        {conversation.title || "Untitled Conversation"}
-                      </.link>
-                    </li>
-                  <% end %>
-                </ul>
+                      </path>
+                    </svg>
+                  </label>
+                </div>
+                <img
+                  src="https://github.com/ash-project/ash_ai/blob/main/logos/ash_ai.png?raw=true"
+                  alt="Logo"
+                  class="h-12"
+                  height="48"
+                />
+                <div class="mx-2 flex-1 px-2">
+                  <p :if={@conversation}>{build_conversation_title_string(@conversation.title)}</p>
+                  <p class="text-xs">AshAi</p>
+                </div>
               </div>
-            </div>
-
-            <div class="flex-1 flex flex-col">
-              <div class="p-4 border-b">
-                <.header class="text-lg">
-                  {if @conversation, do: @conversation.title || "Untitled Conversation", else: "New Chat"}
-                </.header>
-              </div>
-
-              <div class="flex-1 overflow-hidden flex flex-col">
+              <div class="flex-1 flex flex-col overflow-y-scroll bg-base-200 max-h-[calc(100dvh-8rem)]">
                 <div
                   id="message-container"
                   phx-update="stream"
                   class="flex-1 overflow-y-auto px-4 py-2 flex flex-col-reverse"
                 >
                   <%= for {id, message} <- @streams.messages do %>
-                    <div id={id} class="mb-4 flex">
-                      <div class={"rounded-lg p-4 max-w-[80%] \#{if message.source == :user, do: "ml-auto border", else: "border"}"}>
+                    <div
+                      id={id}
+                      class={[
+                        "chat",
+                        message.source == :user && "chat-end",
+                        message.source == :agent && "chat-start"
+                      ]}
+                    >
+                      <div :if={message.source == :agent} class="chat-image avatar">
+                        <div class="w-10 rounded-full bg-base-300 p-1">
+                          <img
+                            src="https://github.com/ash-project/ash_ai/blob/main/logos/ash_ai.png?raw=true"
+                            alt="Logo"
+                          />
+                        </div>
+                      </div>
+                      <div :if={message.source == :user} class="chat-image avatar avatar-placeholder">
+                        <div class="w-10 rounded-full bg-base-300">
+                          <.icon name="hero-user-solid" class="block" />
+                        </div>
+                      </div>
+                      <div class="chat-bubble">
                         {message.text}
                       </div>
                     </div>
                   <% end %>
                 </div>
+              </div>
+              <div class="p-4 border-t h-16">
+                <.form
+                  :let={form}
+                  for={@message_form}
+                  phx-change="validate_message"
+                  phx-debounce="blur"
+                  phx-submit="send_message"
+                  class="flex items-center gap-4"
+                >
+                  <div class="flex-1">
+                    <input
+                      name={form[:text].name}
+                      value={form[:text].value}
+                      type="text"
+                      phx-mounted={JS.focus()}
+                      placeholder="Type your message..."
+                      class="input input-primary w-full mb-0"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <button type="submit" class="btn btn-primary rounded-full">
+                    <.icon name="hero-paper-airplane" /> Send
+                  </button>
+                </.form>
+              </div>
+            </div>
 
-                <div class="p-4 border-t">
-                  <.form
-                    :let={form}
-                    for={@message_form}
-                    phx-change="validate_message"
-                    phx-debounce="blur"
-                    phx-submit="send_message"
-                    class="flex items-center gap-2"
-                  >
-                    <div class="flex-1">
-                      <.input
-                        field={form[:text]}
-                        type="text"
-                        phx-mounted={JS.focus()}
-                        placeholder="Type your message..."
-                        class="w-full py-2 px-3 rounded-md focus:ring-2 focus:ring-blue-500"
-                        autocomplete="off"
-                      />
+            <div class="drawer-side border-r bg-base-300 min-w-72">
+              <div class="py-4 px-6">
+                <.header class="text-lg mb-4">
+                  Conversations
+                </.header>
+                <div class="mb-4">
+                  <.link navigate={~p"/chat"} class="btn btn-primary btn-lg mb-2">
+                    <div class="rounded-full bg-primary-content text-primary w-6 h-6 flex items-center justify-center">
+                      <.icon name="hero-plus" />
                     </div>
-                    <.button type="submit" class="py-2 px-4 rounded-md transition">
-                      Send
-                    </.button>
-                  </.form>
+                    <span>New Chat</span>
+                  </.link>
                 </div>
+                <ul class="flex flex-col-reverse" phx-update="stream" id="conversations-list">
+                  <%= for {id, conversation} <- @streams.conversations do %>
+                    <li id={id}>
+                      <.link
+                        href={~p"/chat/#{conversation.id}"}
+                        phx-click="select_conversation"
+                        phx-value-id={conversation.id}
+                        class={"block py-2 px-3 transition border-l-4 pl-2 mb-2 #{if @conversation && @conversation.id == conversation.id, do: "border-primary font-medium", else: "border-transparent"}"}
+                      >
+                        {build_conversation_title_string(conversation.title)}
+                      </.link>
+                    </li>
+                  <% end %>
+                </ul>
               </div>
             </div>
           </div>
           \"""
+        end
+
+        def build_conversation_title_string(title) do
+          cond do
+            title == nil -> "Untitled conversation"
+            is_binary(title) && String.length(title) > 25 -> String.slice(title, 0, 25) <> "..."
+            is_binary(title) && String.length(title) <= 25 -> title
+          end
         end
 
         def mount(_params, _session, socket) do
